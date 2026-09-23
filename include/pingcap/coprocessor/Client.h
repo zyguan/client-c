@@ -7,6 +7,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -113,6 +114,9 @@ public:
         std::shared_ptr<::coprocessor::Response> resp;
         bool same_zone{true};
         Exception error;
+        // Preserve the dynamic exception and, for ErrIncompatibleRequest, its
+        // complete structured protobuf across the asynchronous queue boundary.
+        std::shared_ptr<Exception> detailed_error;
         bool finished{false};
 
         Result() = default;
@@ -121,6 +125,7 @@ public:
         {}
         explicit Result(const Exception & err)
             : error(err)
+            , detailed_error(err.clone())
         {}
         explicit Result(bool finished_)
             : finished(finished_)
@@ -131,6 +136,8 @@ public:
         {}
 
         const std::string & data() const { return resp->data(); }
+
+        const Exception * exception() const { return detailed_error.get(); }
     };
 
     ResponseIter(std::unique_ptr<common::IMPMCQueue<Result>> && queue_,
