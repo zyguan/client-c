@@ -114,8 +114,10 @@ public:
         std::shared_ptr<::coprocessor::Response> resp;
         bool same_zone{true};
         Exception error;
-        // Preserve the dynamic exception and, for ErrIncompatibleRequest, its
-        // complete structured protobuf across the asynchronous queue boundary.
+        // The by-value error above is retained for existing callers, but slices derived
+        // exceptions and loses structured details such as ErrIncompatibleRequest's protobuf.
+        // Keep a polymorphic clone in shared ownership so Result remains copyable and callers
+        // can inspect the exception directly, without rethrowing an std::exception_ptr.
         std::shared_ptr<Exception> detailed_error;
         bool finished{false};
 

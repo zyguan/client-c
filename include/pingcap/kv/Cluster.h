@@ -93,6 +93,9 @@ struct Cluster
 private:
     static const ClusterConfig & validateCompatibilityConfig(const ClusterConfig & config)
     {
+        // This client currently implements protocol semantics only through incompatible-error-handling.
+        // The configured ceiling must not advertise support for higher versions (e.g. shared locks)
+        // merely because their enum values are available in kvproto; their semantics must be implemented first.
         if (config.default_txn_protocol_version > ::kvrpcpb::TXN_VER_SUPPORT_INCOMPATIBLE_ERROR_HANDLING)
             throw Exception("default transaction protocol version must be legacy or incompatible-error-handling", LogicalError);
         return config;
